@@ -6,7 +6,8 @@ const {
   getAllRooms, 
   addCourse, 
   getAllCourses,
-  getAllUsers
+  getAllUsers,
+  getAttendanceReport
 } = require('../controllers/adminController');
 
 // Middleware to ensure user is logged in AND is an Admin
@@ -30,5 +31,7 @@ router.get('/rooms', getAllRooms);
 router.post('/courses', addCourse);
 router.get('/courses', getAllCourses);
 router.get('/users', getAllUsers);
+router.get('/report', getAttendanceReport);
+
 
 module.exports = router;

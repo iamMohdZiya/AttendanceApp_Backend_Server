@@ -100,3 +100,37 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 };
+
+
+// @desc    Get Attendance Report
+// @route   GET /api/admin/report
+exports.getAttendanceReport = async (req, res) => {
+  const { courseId, startDate, endDate } = req.query;
+
+  try {
+    // 1. Find all sessions for this course in the date range
+    const sessions = await Session.find({
+      course: courseId,
+      createdAt: { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate) 
+      }
+    }).select('_id date');
+
+    const sessionIds = sessions.map(s => s._id);
+
+    // 2. Find all attendance records for these sessions
+    const report = await Attendance.find({ session: { $in: sessionIds } })
+      .populate('student', 'name rollNo email')
+      .populate({
+        path: 'session',
+        select: 'createdAt',
+        populate: { path: 'course', select: 'name courseCode' }
+      })
+      .sort({ createdAt: -1 });
+
+    res.json(report);
+  } catch (error) {
+    res.status(500).json({ message: 'Error generating report', error: error.message });
+  }
+};
