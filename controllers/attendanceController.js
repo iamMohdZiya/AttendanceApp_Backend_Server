@@ -7,7 +7,7 @@ const { getDistanceInMeters } = require('../utils/geoUtils');
 // @route   POST /api/attendance/mark
 // @access  Student Only
 // ... imports
-const { getDistanceInMeters } = require('../utils/geoUtils');
+
 
 exports.markAttendance = async (req, res) => {
   const { sessionId, scannedCode, location, accuracy } = req.body;
