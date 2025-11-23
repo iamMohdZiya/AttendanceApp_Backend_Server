@@ -91,3 +91,19 @@ exports.getRoomsForFaculty = async (req, res) => {
     res.status(500).json({ message: 'Error fetching rooms' });
   }
 };
+
+
+// @desc    Get All Active Sessions (For Student Dashboard)
+// @route   GET /api/session/active
+exports.getActiveSessions = async (req, res) => {
+  try {
+    // Find sessions where isActive is true, and populate Course/Faculty names
+    const sessions = await Session.find({ isActive: true })
+      .populate('course', 'name courseCode')
+      .populate('faculty', 'name');
+    
+    res.json(sessions);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching sessions' });
+  }
+};
