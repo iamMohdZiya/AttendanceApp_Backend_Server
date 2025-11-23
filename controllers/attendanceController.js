@@ -98,3 +98,46 @@ exports.getSessionAttendance = async (req, res) => {
     res.status(500).json({ message: 'Error fetching roster' });
   }
 };
+
+
+// @desc    Get Faculty Report (Range + Present Only)
+// @route   GET /api/attendance/faculty-report
+exports.getFacultyReport = async (req, res) => {
+  const { startDate, endDate, courseId } = req.query;
+  const facultyId = req.user.id;
+
+  try {
+    // 1. Find sessions for this faculty within dates
+    let query = {
+      faculty: facultyId,
+      createdAt: { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate) 
+      }
+    };
+    
+    if (courseId) {
+      query.course = courseId;
+    }
+
+    const sessions = await Session.find(query).select('_id course createdAt');
+    const sessionIds = sessions.map(s => s._id);
+
+    // 2. Find ONLY 'Present' attendance for these sessions
+    const report = await Attendance.find({ 
+      session: { $in: sessionIds },
+      status: 'Present' // <--- Key change: Only Present students
+    })
+    .populate('student', 'name rollNo email')
+    .populate({
+      path: 'session',
+      select: 'createdAt',
+      populate: { path: 'course', select: 'name courseCode' }
+    })
+    .sort({ createdAt: -1 });
+
+    res.json(report);
+  } catch (error) {
+    res.status(500).json({ message: 'Error generating report' });
+  }
+};
