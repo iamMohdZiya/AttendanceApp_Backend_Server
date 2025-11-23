@@ -60,3 +60,19 @@ exports.getRotatingQR = async (req, res) => {
     res.status(500).json({ message: 'Error refreshing QR', error: error.message });
   }
 };
+
+// ... existing imports
+const Course = require('../models/Course'); // <-- Import Course model
+
+// ... existing startSession and getRotatingQR functions ...
+
+// @desc    Get Courses for the Logged-in Faculty
+// @route   GET /api/session/my-courses
+exports.getMyCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ faculty: req.user.id });
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching courses' });
+  }
+};
