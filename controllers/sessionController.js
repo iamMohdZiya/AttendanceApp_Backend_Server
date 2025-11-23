@@ -100,15 +100,41 @@ exports.getRoomsForFaculty = async (req, res) => {
 
 // @desc    Get All Active Sessions (For Student Dashboard)
 // @route   GET /api/session/active
+// @desc    Get All Active Sessions (Filtered by Student Dept)
+// @route   GET /api/session/active
 exports.getActiveSessions = async (req, res) => {
   try {
-    // Find sessions where isActive is true, and populate Course/Faculty names
+    // 1. Fetch all active sessions & populate course details
     const sessions = await Session.find({ isActive: true })
-      .populate('course', 'name courseCode')
+      .populate('course', 'name courseCode department') // Include department in fetch
       .populate('faculty', 'name');
-    
+
+    // 2. If the user is a Student, FILTER results
+    if (req.user.role === 'student') {
+      // Get the student's department from their profile
+      const studentDept = req.user.dept;
+
+      if (!studentDept) {
+        // Safety check: If student has no dept assigned, show nothing or everything?
+        // Let's show empty to force them to contact admin.
+        return res.json([]); 
+      }
+
+      // Filter: Only show sessions where Course Dept matches Student Dept
+      // Case-insensitive comparison (e.g., "mca" vs "MCA")
+      const filteredSessions = sessions.filter(session => 
+        session.course.department && 
+        session.course.department.toLowerCase() === studentDept.toLowerCase()
+      );
+
+      return res.json(filteredSessions);
+    }
+
+    // 3. If Faculty/Admin, return all active sessions
     res.json(sessions);
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error fetching sessions' });
   }
 };
