@@ -4,19 +4,23 @@ const crypto = require('crypto'); // Built-in Node module for random strings
 // @desc    Start a new Class Session
 // @route   POST /api/session/start
 // @access  Faculty Only
+// @desc    Start a new Class Session (Dynamic Location)
+// @route   POST /api/session/start
 exports.startSession = async (req, res) => {
-  const { courseId, roomId } = req.body;
-  const facultyId = req.user.id; // Comes from authMiddleware
+  const { courseId, lat, lng } = req.body; // <-- Receiving Lat/Lng now
+  const facultyId = req.user.id;
 
   try {
-    // 1. Generate initial QR Code
-    const initialCode = crypto.randomBytes(4).toString('hex'); // Random 8-char string
+    const initialCode = require('crypto').randomBytes(4).toString('hex');
 
-    // 2. Create Session in DB
     const session = await Session.create({
       course: courseId,
       faculty: facultyId,
-      room: roomId,
+      location: {
+        lat: lat,
+        lng: lng,
+        radius: 100 // We fix this to 100m as per your request
+      },
       isActive: true,
       currentQRParams: {
         code: initialCode,
@@ -33,6 +37,7 @@ exports.startSession = async (req, res) => {
     res.status(500).json({ message: 'Error starting session', error: error.message });
   }
 };
+// ... (keep the other functions like getRotatingQR, etc.)
 
 // @desc    Get/Refresh QR Code (Called every 30s by Faculty App)
 // @route   GET /api/session/:id/qr
