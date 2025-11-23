@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { startSession, getRotatingQR } = require('../controllers/sessionController');
+const { startSession, getRotatingQR , getMyCourses} = require('../controllers/sessionController');
 const { protect, facultyOnly } = require('../middleware/authMiddleware'); 
 
 // Route: POST /api/session/start
