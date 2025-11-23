@@ -112,3 +112,25 @@ exports.getActiveSessions = async (req, res) => {
     res.status(500).json({ message: 'Error fetching sessions' });
   }
 };
+
+// @desc    End a Session (Mark as inactive)
+// @route   POST /api/session/end
+exports.endSession = async (req, res) => {
+  const { sessionId } = req.body;
+
+  try {
+    const session = await Session.findByIdAndUpdate(
+      sessionId, 
+      { isActive: false, endTime: Date.now() },
+      { new: true }
+    );
+
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    res.json({ success: true, message: 'Session ended successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error ending session' });
+  }
+};
