@@ -76,3 +76,18 @@ exports.getMyCourses = async (req, res) => {
     res.status(500).json({ message: 'Error fetching courses' });
   }
 };
+
+const Room = require('../models/Room'); // <--- Ensure you import the Room model at the top
+
+// ... existing imports and functions ...
+
+// @desc    Get All Rooms (For Faculty to select)
+// @route   GET /api/session/rooms
+exports.getRoomsForFaculty = async (req, res) => {
+  try {
+    const rooms = await Room.find();
+    res.json(rooms);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching rooms' });
+  }
+};
