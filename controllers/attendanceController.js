@@ -93,3 +93,17 @@ exports.getStudentHistory = async (req, res) => {
     res.status(500).json({ message: 'Error fetching history' });
   }
 };
+
+// @desc    Get Attendance for a specific Session (Live Roster)
+// @route   GET /api/attendance/session/:sessionId
+exports.getSessionAttendance = async (req, res) => {
+  try {
+    const attendanceList = await Attendance.find({ session: req.params.sessionId })
+      .populate('student', 'name rollNo email') // Get student details
+      .sort({ createdAt: -1 }); // Newest first
+
+    res.json(attendanceList);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching roster' });
+  }
+};
