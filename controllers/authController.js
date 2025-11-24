@@ -106,3 +106,67 @@ exports.updateUserProfile = async (req, res) => {
     res.status(404).json({ message: 'User not found' });
   }
 };
+
+// @desc    Register Bulk Users (CSV Import)
+// @route   POST /api/auth/register-bulk
+exports.registerBulkUsers = async (req, res) => {
+  const { users, role } = req.body; // users is an array, role is 'student' or 'faculty'
+
+  if (!users || users.length === 0) {
+    return res.status(400).json({ message: 'No user data provided' });
+  }
+
+  try {
+    let successCount = 0;
+    let failCount = 0;
+    const processedUsers = [];
+
+    // Loop through each row from the CSV
+    for (const user of users) {
+      // 1. Basic Validation
+      if (!user.email || !user.name) {
+        failCount++;
+        continue;
+      }
+
+      // 2. Check if user already exists
+      const userExists = await User.findOne({ email: user.email });
+      if (userExists) {
+        failCount++;
+        continue;
+      }
+
+      // 3. Hash Password (Default to '123456' if column missing)
+      const plainPassword = user.password || '123456';
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+      // 4. Create Object
+      processedUsers.push({
+        name: user.name,
+        email: user.email,
+        password: hashedPassword,
+        role: role, // 'student' or 'faculty' passed from frontend
+        rollNo: user.rollNo || '',
+        staffId: user.staffId || '',
+        dept: user.dept || '',
+        isActive: true
+      });
+      successCount++;
+    }
+
+    // 5. Bulk Insert
+    if (processedUsers.length > 0) {
+      await User.insertMany(processedUsers);
+    }
+
+    res.status(201).json({
+      message: `Processed: ${successCount} successful, ${failCount} duplicates/failed.`,
+      successCount,
+      failCount
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error during bulk import', error: error.message });
+  }
+};
