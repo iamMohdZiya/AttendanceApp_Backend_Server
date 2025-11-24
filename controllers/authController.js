@@ -73,3 +73,36 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
+
+// @desc    Update User Profile
+// @route   PUT /api/auth/profile
+exports.updateUserProfile = async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (user) {
+    // Update allowed fields
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    
+    // Only hash and update password if a new one is sent
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    // DO NOT update dept, rollNo, staffId, or role here for security
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      dept: updatedUser.dept,
+      token: generateToken(updatedUser._id, updatedUser.role),
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+};
